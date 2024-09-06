@@ -37,8 +37,10 @@ library:
   dependencies:
     - attoparsec
     - Decimal
+    - mtl
     - text
     - time
+    - transformers
 
 executables:
   mortgage-calculator:

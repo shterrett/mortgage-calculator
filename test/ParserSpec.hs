@@ -3,6 +3,7 @@
 module ParserSpec (spec) where
 
 import Parser
+import MortgageCalculator (Payment(..))
 import Data.Maybe (fromMaybe)
 import Data.Time (Day)
 import Data.Time.Format.ISO8601 (formatParseM, iso8601Format)

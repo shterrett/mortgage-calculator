@@ -13,6 +13,7 @@ module Options
 
 import Options.Generic
 import Data.Time (Day)
+import MortgageCalculator(ExtraInterest)
 
 data Options w = Options
   { showAll :: w ::: Bool <?> "Show balances every day in the range" <!> "False"
@@ -29,9 +30,3 @@ instance ParseRecord (Options Wrapped) where
   parseRecord = parseRecordWithModifiers lispCaseModifiers
 
 deriving instance Show (Options Unwrapped)
-
-data ExtraInterest =
-  TowardsPrincipal
-  | NegativeBalance
-  deriving (Show, Generic, Eq, Read)
-  deriving anyclass (ParseField, ParseFields, ParseRecord)

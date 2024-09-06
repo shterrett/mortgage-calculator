@@ -4,7 +4,6 @@
 
 module Parser
   ( parsePayments
-  , Payment(..)
   ) where
 
 import Control.Applicative ((<|>))
@@ -16,13 +15,7 @@ import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Time (Day)
 import Data.Time.Format.ISO8601 (formatParseM, iso8601Format)
-
-data Payment = Payment
-  { date :: Day
-  , principalAmount :: Decimal
-  , interestAmount :: Decimal
-  }
-  deriving (Show, Eq)
+import MortgageCalculator (Payment(..))
 
 parsePayments :: Text -> Either String [Payment]
 parsePayments = parseOnly (pp <* endOfInput)
