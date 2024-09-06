@@ -34,9 +34,11 @@ ghc-options:
 
 library:
   source-dirs: src
+  dependencies:
+    time
 
 executables:
-  mortgage-calculator-exe:
+  mortgage-calculator:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -44,8 +46,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - Decimal
     - mortgage-calculator
     - optparse-generic
+    - time
 
 tests:
   mortgage-calculator-test:

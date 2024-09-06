@@ -1,6 +1,12 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
+
 module Main (main) where
 
-import Lib
+import Options (Options(..), unwrapRecord)
 
 main :: IO ()
-main = someFunc
+main = do
+  o@Options{..} <- unwrapRecord "mortgage-calculator"
+  putStrLn $ show o
+  pure ()
