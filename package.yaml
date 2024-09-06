@@ -35,7 +35,10 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
-    time
+    - attoparsec
+    - Decimal
+    - text
+    - time
 
 executables:
   mortgage-calculator:
@@ -60,4 +63,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - Decimal
+    - hspec
     - mortgage-calculator
+    - time
