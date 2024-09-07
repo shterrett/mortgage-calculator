@@ -9,13 +9,12 @@ module Parser
 import Control.Applicative ((<|>))
 import Data.Attoparsec.Text
 import Data.Char (isSpace)
-import Data.Decimal (Decimal, realFracToDecimal)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as Text
 import Data.Time (Day)
 import Data.Time.Format.ISO8601 (formatParseM, iso8601Format)
-import MortgageCalculator (Payment(..))
+import MortgageCalculator (Payment(..), Dollars, dollars)
 
 parsePayments :: Text -> Either String [Payment]
 parsePayments = parseOnly (pp <* endOfInput)
@@ -38,21 +37,21 @@ parsePayment = do
     , interestAmount = fromMaybe 0 interest
     }
   where
-    forwards :: Parser (Maybe Decimal, Maybe Decimal)
+    forwards :: Parser (Maybe Dollars, Maybe Dollars)
     forwards = do
       p <- parsePrincipal
       _ <- skipSpace
       i <- parseInterest
       pure (Just p, Just i)
-    backwards :: Parser (Maybe Decimal, Maybe Decimal)
+    backwards :: Parser (Maybe Dollars, Maybe Dollars)
     backwards = do
       i <- parseInterest
       _ <- skipSpace
       p <- parsePrincipal
       pure (Just p, Just i)
-    onlyPrincipal :: Parser (Maybe Decimal, Maybe Decimal)
+    onlyPrincipal :: Parser (Maybe Dollars, Maybe Dollars)
     onlyPrincipal = (,Nothing) . Just <$> parsePrincipal
-    onlyInterest :: Parser (Maybe Decimal, Maybe Decimal)
+    onlyInterest :: Parser (Maybe Dollars, Maybe Dollars)
     onlyInterest = (Nothing,) . Just <$> parseInterest
 
 parseDate :: Parser Day
@@ -60,8 +59,8 @@ parseDate = do
   dayString <- fmap Text.unpack $ takeTill isSpace
   formatParseM iso8601Format dayString
 
-parsePrincipal :: Parser Decimal
-parsePrincipal = fmap (realFracToDecimal 2) $ char 'p' *> char ':' *> double
+parsePrincipal :: Parser Dollars
+parsePrincipal = fmap dollars $ char 'p' *> char ':' *> double
 
-parseInterest :: Parser Decimal
-parseInterest = fmap (realFracToDecimal 2) $ char 'i' *> char ':' *> double
+parseInterest :: Parser Dollars
+parseInterest = fmap dollars $ char 'i' *> char ':' *> double
