@@ -16,18 +16,16 @@ module MortgageCalculator
   , Payment(..)
   , Event(..)
   , calculate
+  , Mortgage(..)
   ) where
 
 import Control.Monad (forM_, when)
-import Control.Monad.State (StateT, MonadState, evalStateT, modify, get)
-import Control.Monad.Except (ExceptT, MonadError, runExceptT)
+import Control.Monad.State (State, MonadState, evalState, modify, get)
 import Control.Monad.Writer.CPS (WriterT, MonadWriter, execWriterT, tell)
-import Data.Functor.Identity (Identity, runIdentity)
 import Data.Decimal (Decimal, realFracToDecimal, divide)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (isJust)
-import Data.Text (Text)
 import Data.Time (Day, toGregorian)
 import Options.Generic (ParseField, ParseFields, ParseRecord, Generic)
 
@@ -92,31 +90,43 @@ data Account = Account
   deriving (Show)
 
 newtype Calculator a = Calculator
-  { unCalculator :: WriterT [Event] (StateT Account (ExceptT Text Identity)) a
+  { unCalculator :: WriterT [Event] (State Account) a
   }
   deriving newtype ( Functor
                    , Applicative
                    , Monad
                    , MonadWriter [Event]
                    , MonadState Account
-                   , MonadError Text
                    )
 
-runCalculator :: Account -> Calculator a -> Either Text [Event]
+runCalculator :: Account -> Calculator a -> [Event]
 runCalculator initial =
-  runIdentity
-  . runExceptT
-  . flip evalStateT initial
+  flip evalState initial
   . execWriterT
   . unCalculator
 
+-- | The core logic: Calculates the daily interest, balance, and principal for
+-- the mortgage, account for payments made on the day they are submitted.
+-- On each day:
+--   - if it is the first of the month, the accrued interest is added to the
+--   balance due and set to 0
+--   - interest for the day is accrued (current principal * apr / 365)
+--   - payments are applied. Depending on the option, excess interest will
+--   either immediately reduce the principal, or allow the balance due to go
+--   negative. "Excess" is calculated against only the balance due and not any
+--   interst accrued during the month (ie, if the payment is made on the 5th,
+--   the interest accrued from the 1st - the 5th is not added to the balance
+--   due)
+--   - If the day is "interesting" (it's the 1st, a payment was made, or the
+--   showAll flag was passed) an event with the current state of the account
+--   is emitted. This will be the final output
 calculate ::
   Day -- ^ start date
   -> Day -- ^ end date
   -> Mortgage
   -> [Payment] -- ^ Record of payments made
   -> Bool -- ^ create an Event for every day regardless of whether anything interesting happened
-  -> Either Text [Event]
+  -> [Event]
 calculate start end mortgage payments showAll =
   runCalculator initialAccount $ calculate' showAll mortgage dateRange paymentMap
   where
@@ -177,6 +187,8 @@ calculate' showAll mortgage range payments = do
     emitEvent :: Day -> Maybe Payment -> Calculator ()
     emitEvent day mPayment = do
       a <- get
+      -- This reflects the state of the account after the payment is applied.
+      -- So if the payment is made on the first, then balance due will show 0.
       let
         event = Event
           { date = day
