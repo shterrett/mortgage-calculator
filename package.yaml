@@ -57,6 +57,7 @@ executables:
     - Decimal
     - mortgage-calculator
     - optparse-generic
+    - text
     - time
 
 tests:
