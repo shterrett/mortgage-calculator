@@ -39,6 +39,8 @@ library:
     - containers
     - Decimal
     - mtl
+    - optparse-generic
+    - table-layout
     - text
     - time
     - transformers

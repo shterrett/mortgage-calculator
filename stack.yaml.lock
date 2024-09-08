@@ -3,7 +3,14 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: table-layout-1.0.0.1@sha256:deb84b273141fccd6313be13d76b08cdf32a0b9af969c6432580fec75c28193e,7889
+    pantry-tree:
+      sha256: 8378ad591c1bf566e9444c52ae0e10f11faea7366565b6997d57c43044d4f89e
+      size: 2547
+  original:
+    hackage: table-layout-1.0.0.1
 snapshots:
 - completed:
     sha256: bcc0956a06c62db5a7bd6c16dc3f85444453414b46d8ad118c5e9a4e8a51f57f
