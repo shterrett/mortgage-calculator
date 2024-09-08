@@ -39,7 +39,7 @@ newtype Apr = Apr Decimal
   deriving newtype (Show, Eq, Ord, Num)
 
 apr :: Double -> Apr
-apr = Apr . realFracToDecimal 4
+apr = Apr . realFracToDecimal 5
 
 -- | Basic data about the Mortgage; does not change
 data Mortgage = Mortgage
