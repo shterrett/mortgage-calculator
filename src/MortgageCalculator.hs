@@ -11,6 +11,7 @@ module MortgageCalculator
   ( ExtraInterest(..)
   , Dollars
   , dollars
+  , cents
   , Apr
   , apr
   , Payment(..)
@@ -20,9 +21,9 @@ module MortgageCalculator
   ) where
 
 import Control.Monad (forM_, when)
-import Control.Monad.State (State, MonadState, evalState, modify, get)
+import Control.Monad.State (State, MonadState, evalState, modify, get, gets)
 import Control.Monad.Writer.CPS (WriterT, MonadWriter, execWriterT, tell)
-import Data.Decimal (Decimal, realFracToDecimal, divide)
+import Data.Decimal (Decimal, realFracToDecimal, divide, roundTo)
 import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (isJust)
@@ -34,6 +35,9 @@ newtype Dollars = Dollars Decimal
 
 dollars :: Double -> Dollars
 dollars = Dollars . realFracToDecimal 2
+
+cents :: Dollars -> Dollars
+cents (Dollars d) = Dollars $ roundTo 2 d
 
 newtype Apr = Apr Decimal
   deriving newtype (Show, Eq, Ord, Num)
@@ -148,9 +152,10 @@ calculate' showAll mortgage range payments = do
   forM_ range $ \day -> do
     when (firstOfMonth day) setInterestDue
     accrueInterest
+    currentBalance <- gets balanceDue
     let payment = Map.lookup day payments
     maybe (pure ()) applyPayment payment
-    when (interesting day payment) $ emitEvent day payment
+    when (interesting day payment) $ emitEvent day currentBalance payment
 
   where
     firstOfMonth :: Day -> Bool
@@ -184,15 +189,14 @@ calculate' showAll mortgage range payments = do
               }
     interesting :: Day -> Maybe Payment -> Bool
     interesting day mPayment = showAll || firstOfMonth day || isJust mPayment
-    emitEvent :: Day -> Maybe Payment -> Calculator ()
-    emitEvent day mPayment = do
+    emitEvent :: Day -> Dollars -> Maybe Payment -> Calculator ()
+    emitEvent day currentBalance mPayment = do
       a <- get
-      -- This reflects the state of the account after the payment is applied.
-      -- So if the payment is made on the first, then balance due will show 0.
+      -- currentBalance reflects the balance _before_ the payment is applied
       let
         event = Event
           { date = day
-          , amountDue = a.balanceDue
+          , amountDue = currentBalance
           , interestPaid = maybe (dollars 0) interestAmount mPayment
           , principalPaid = maybe (dollars 0) principalAmount mPayment
           , currentMonthInterest = a.accruedInterest
